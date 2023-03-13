@@ -114,6 +114,11 @@ class Core(object):
             self.myRF.writeRF(rd, self.State.IF['PC'] + 4)
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
 
+    def exeRTypeIns(self, elements):
+        funct7, funct3 = elements['funct7'], elements['funct3']
+        pass
+
+
 
 
 class SingleStageCore(Core):
@@ -175,6 +180,20 @@ class SingleStageCore(Core):
 
 
 def parseRTypeIns(instruction: str) -> dict:
+    funct7 = instruction[0:7]
+    funct3 = instruction[17:20]
+    op = ""
+    if funct7 == "0100000":
+        op = "SUB"
+    else:
+        if funct3 == "000":
+            op = "ADD"
+        elif funct3 == "100":
+            op = "XOR"
+        elif funct3 == "110":
+            op = "OR"
+        elif funct3 == "111":
+            op = "AND"
     result = {
         "funct7": instruction[0:7],
         "rs2": instruction[7:12],
@@ -182,17 +201,30 @@ def parseRTypeIns(instruction: str) -> dict:
         "funct3": instruction[17:20],
         "rd": instruction[20:25],
         "opcode": instruction[25:32],
+        "op": op,
     }
     return result
 
 
 def parseITypeIns(instruction: str) -> dict:
+    funct3 = instruction[17:20]
+    op = ""
+    if funct3 == "000":
+        op = "ADDI"
+    elif funct3 == "100":
+        op = "XORI"
+    elif funct3 == "110":
+        op = "ORI"
+    elif funct3 == "111":
+        op = "ANDI"
+
     result = {
         "imm": instruction[0:12],
         "rs1": instruction[12:17],
         "funct3": instruction[17:20],
         "rd": instruction[20:25],
         "opcode": instruction[25:32],
+        "op": op,
     }
     return result
 
@@ -204,6 +236,7 @@ def parseSTypeIns(instruction: str) -> dict:
         "rs1": instruction[12:17],
         "funct3": instruction[17:20],
         "opcode": instruction[25:32],
+        "op": "SW"
     }
     return result
 
