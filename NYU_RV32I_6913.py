@@ -114,6 +114,16 @@ class Core(object):
             self.myRF.writeRF(rd, self.State.IF['PC'] + 4)
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
 
+
+    def exeITypeIns(self, elements):
+        op, imm, rs1, rd = elements['op'], elements['imm'], elements['rs1'], elements['rd']
+        rs1 = self.myRF.readRF(rs1)
+        if op == 'ADDI':
+            rd_value = rs1 + signedBin2int(imm)
+        elif op == 'XORI':
+            rd_value = rs1 ^ signedBin2int(imm)
+
+
     def exeRTypeIns(self, elements):
         funct7, funct3 = elements['funct7'], elements['funct3']
         pass
