@@ -98,7 +98,21 @@ class Core(object):
         self.ext_imem = imem
         self.ext_dmem = dmem
 
+    def exeBTypeIns(self, elements):
+        op, rs1, rs2, imm = elements['op'], elements['rs1'], elements['rs2'], elements['imm']
+        rs1, rs2 = self.myRF.readRF(rs1), self.myRF.readRF(rs2)
+        if op == 'BEQ':
+            self.nextState.IF['PC'] =  self.State.IF['PC'] + signedBin2int(imm) if rs1 == rs2\
+                else self.State.IF['PC'] + 4
+        elif op == 'BNE':
+            self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm) if rs1 != rs2 \
+                else self.State.IF['PC'] + 4
 
+    def exeJTypeIns(self, elements):
+        op, rd, imm = elements['op'], elements['rd'], elements['imm']
+        if op == 'JAL':
+            self.myRF.writeRF(rd, self.State.IF['PC'] + 4)
+            self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
 class SingleStageCore(Core):
     def __init__(self, ioDir, imem, dmem):
         super(SingleStageCore, self).__init__(ioDir + "/SS_", imem, dmem)
@@ -124,7 +138,15 @@ class SingleStageCore(Core):
         if insType == "HALT":
             self.halted = True
             return
-        self.nextState.IF["PC"] += 4
+        elif insType == 'B':
+            ins_elements = parseBTypeIns(instruction)
+            self.exeBTypeIns(ins_elements)
+        elif insType == 'J':
+            ins_elements = parseJTypeIns(instruction)
+            self.exeJTypeIns(ins_elements)
+        else:
+            # implement other types of instructions that won't affect nextState.IF["PC"]
+            self.nextState.IF["PC"] += 4
 
         # self.halted = True
         if self.state.IF["nop"]:
@@ -229,6 +251,46 @@ class FiveStageCore(Core):
 
 def getTypeByOpCode(code: str) -> str:
     return OPCODE2TYPE[code]
+
+def parseBTypeIns(ins):
+    funct3 = ins[-15:-12]
+    if funct3 == '000':
+        op = 'BEQ'
+    elif funct3 == '001':
+        op = 'BNE'
+    return {
+        'op': op,
+        'rs2': ins[-25:-20],
+        'rs1': ins[-20:-15],
+        'imm': ins[-32] + ins[-8] + ins[-31:-25] + ins[-12:-8]
+    }
+
+# def parseUTypeIns(ins):
+#     return {
+#         'imm': ins[-32:-12],
+#         'rd': ins[-12:-7],
+#         'opcode': ins[-7:]
+#     }
+
+def parseJTypeIns(ins):
+    return {
+        'op': 'JAL',
+        'imm': ins[-32] + ins[-20:-12] + ins[-21] + ins[-31:-21],
+        'rd': ins[-12:-7],
+    }
+
+def int2signedBin(d: int) -> str:
+    '''
+    :param n: a decimal number
+    :return: a string represents the signed binary of d
+    '''
+    pass
+
+def signedBin2int(b: str) -> int:
+    '''
+    :param b: a string represents a signed binary
+    :return: the decimal number of b
+    '''
 
 
 if __name__ == "__main__":
