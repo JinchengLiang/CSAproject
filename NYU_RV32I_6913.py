@@ -110,6 +110,17 @@ class SingleStageCore(Core):
         print(f"PC = {self.state.IF['PC']} ins = {instruction}")
         insType = getTypeByOpCode(instruction[-7:])
         print(insType)
+
+        # parse instruction
+        parseRes = {}
+        if insType == "R":
+            parseRes = parseRTypeIns(instruction)
+        elif insType == "I":
+            parseRes = parseITypeIns(instruction)
+        elif insType == "S":
+            parseRes = parseSTypeIns(instruction)
+        print(f"parseRes = {parseRes}")
+
         if insType == "HALT":
             self.halted = True
             return
@@ -136,6 +147,40 @@ class SingleStageCore(Core):
             perm = "a"
         with open(self.opFilePath, perm) as wf:
             wf.writelines(printstate)
+
+
+def parseRTypeIns(instruction: str) -> dict:
+    result = {
+        "funct7": instruction[0:7],
+        "rs2": instruction[7:12],
+        "rs1": instruction[12:17],
+        "funct3": instruction[17:20],
+        "rd": instruction[20:25],
+        "opcode": instruction[25:32],
+    }
+    return result
+
+
+def parseITypeIns(instruction: str) -> dict:
+    result = {
+        "imm": instruction[0:12],
+        "rs1": instruction[12:17],
+        "funct3": instruction[17:20],
+        "rd": instruction[20:25],
+        "opcode": instruction[25:32],
+    }
+    return result
+
+
+def parseSTypeIns(instruction: str) -> dict:
+    result = {
+        "imm": instruction[0:7] + instruction[20:25],
+        "rs2": instruction[7:12],
+        "rs1": instruction[12:17],
+        "funct3": instruction[17:20],
+        "opcode": instruction[25:32],
+    }
+    return result
 
 
 class FiveStageCore(Core):
