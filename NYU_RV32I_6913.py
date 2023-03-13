@@ -102,7 +102,7 @@ class Core(object):
         op, rs1, rs2, imm = elements['op'], elements['rs1'], elements['rs2'], elements['imm']
         rs1, rs2 = self.myRF.readRF(rs1), self.myRF.readRF(rs2)
         if op == 'BEQ':
-            self.nextState.IF['PC'] =  self.State.IF['PC'] + signedBin2int(imm) if rs1 == rs2\
+            self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm) if rs1 == rs2 \
                 else self.State.IF['PC'] + 4
         elif op == 'BNE':
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm) if rs1 != rs2 \
@@ -113,6 +113,9 @@ class Core(object):
         if op == 'JAL':
             self.myRF.writeRF(rd, self.State.IF['PC'] + 4)
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
+
+
+
 class SingleStageCore(Core):
     def __init__(self, ioDir, imem, dmem):
         super(SingleStageCore, self).__init__(ioDir + "/SS_", imem, dmem)
@@ -126,14 +129,14 @@ class SingleStageCore(Core):
         print(insType)
 
         # parse instruction
-        parseRes = {}
+        ins_elements = {}
         if insType == "R":
-            parseRes = parseRTypeIns(instruction)
+            ins_elements = parseRTypeIns(instruction)
         elif insType == "I":
-            parseRes = parseITypeIns(instruction)
+            ins_elements = parseITypeIns(instruction)
         elif insType == "S":
-            parseRes = parseSTypeIns(instruction)
-        print(f"parseRes = {parseRes}")
+            ins_elements = parseSTypeIns(instruction)
+        print(f"parseRes = {ins_elements}")
 
         if insType == "HALT":
             self.halted = True
@@ -252,6 +255,7 @@ class FiveStageCore(Core):
 def getTypeByOpCode(code: str) -> str:
     return OPCODE2TYPE[code]
 
+
 def parseBTypeIns(ins):
     funct3 = ins[-15:-12]
     if funct3 == '000':
@@ -264,6 +268,7 @@ def parseBTypeIns(ins):
         'rs1': ins[-20:-15],
         'imm': ins[-32] + ins[-8] + ins[-31:-25] + ins[-12:-8]
     }
+
 
 # def parseUTypeIns(ins):
 #     return {
@@ -279,12 +284,14 @@ def parseJTypeIns(ins):
         'rd': ins[-12:-7],
     }
 
+
 def int2signedBin(d: int) -> str:
     '''
     :param n: a decimal number
     :return: a string represents the signed binary of d
     '''
     pass
+
 
 def signedBin2int(b: str) -> int:
     '''
