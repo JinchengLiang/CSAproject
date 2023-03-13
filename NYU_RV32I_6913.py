@@ -133,16 +133,7 @@ class SingleStageCore(Core):
         insType = getTypeByOpCode(instruction[-7:])
         print(insType)
 
-        # parse instruction
-        ins_elements = {}
-        if insType == "R":
-            ins_elements = parseRTypeIns(instruction)
-        elif insType == "I":
-            ins_elements = parseITypeIns(instruction)
-        elif insType == "S":
-            ins_elements = parseSTypeIns(instruction)
-        print(f"parseRes = {ins_elements}")
-
+        # parse and implement instruction
         if insType == "HALT":
             self.halted = True
             return
@@ -154,6 +145,12 @@ class SingleStageCore(Core):
             self.exeJTypeIns(ins_elements)
         else:
             # implement other types of instructions that won't affect nextState.IF["PC"]
+            if insType == "R":
+                ins_elements = parseRTypeIns(instruction)
+            elif insType == "I":
+                ins_elements = parseITypeIns(instruction)
+            elif insType == "S":
+                ins_elements = parseSTypeIns(instruction)
             self.nextState.IF["PC"] += 4
 
         # self.halted = True
@@ -335,7 +332,7 @@ def signedBin2int(b: str) -> int:
     value = b[1:]
     if sign == '0':   # non-negative
         return int(value, 2)
-    elif sign == '1':
+    elif sign == '1':   # negative
         complement = ['1'  if bit == '0' else '0' for bit in value]
         i = -1
         while complement[i] == '1':
