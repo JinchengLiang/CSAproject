@@ -100,6 +100,7 @@ class Core(object):
 
     def exeBTypeIns(self, elements):
         op, rs1, rs2, imm = elements['op'], elements['rs1'], elements['rs2'], elements['imm']
+        rs1, rs2 = self.myRF.readRF(rs1), self.myRF.readRF(rs2)
         if op == 'BEQ':
             self.nextState.IF['PC'] =  self.State.IF['PC'] + signedBin2int(imm) if rs1 == rs2\
                 else self.State.IF['PC'] + 4
