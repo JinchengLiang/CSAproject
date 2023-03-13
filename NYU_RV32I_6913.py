@@ -116,6 +116,7 @@ class Core(object):
 
     def exeRTypeIns(self, elements):
         funct7, funct3 = elements['funct7'], elements['funct3']
+        pass
 
 
 
