@@ -102,7 +102,7 @@ class Core(object):
         op, rs1, rs2, imm = elements['op'], elements['rs1'], elements['rs2'], elements['imm']
         rs1, rs2 = self.myRF.readRF(rs1), self.myRF.readRF(rs2)
         if op == 'BEQ':
-            self.nextState.IF['PC'] =  self.State.IF['PC'] + signedBin2int(imm) if rs1 == rs2\
+            self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm) if rs1 == rs2 \
                 else self.State.IF['PC'] + 4
         elif op == 'BNE':
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm) if rs1 != rs2 \
@@ -113,6 +113,14 @@ class Core(object):
         if op == 'JAL':
             self.myRF.writeRF(rd, self.State.IF['PC'] + 4)
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
+
+    def exeRTypeIns(self, elements):
+        funct7, funct3 = elements['funct7'], elements['funct3']
+        pass
+
+
+
+
 class SingleStageCore(Core):
     def __init__(self, ioDir, imem, dmem):
         super(SingleStageCore, self).__init__(ioDir + "/SS_", imem, dmem)
@@ -124,6 +132,17 @@ class SingleStageCore(Core):
         print(f"PC = {self.state.IF['PC']} ins = {instruction}")
         insType = getTypeByOpCode(instruction[-7:])
         print(insType)
+
+        # parse instruction
+        ins_elements = {}
+        if insType == "R":
+            ins_elements = parseRTypeIns(instruction)
+        elif insType == "I":
+            ins_elements = parseITypeIns(instruction)
+        elif insType == "S":
+            ins_elements = parseSTypeIns(instruction)
+        print(f"parseRes = {ins_elements}")
+
         if insType == "HALT":
             self.halted = True
             return
@@ -158,6 +177,68 @@ class SingleStageCore(Core):
             perm = "a"
         with open(self.opFilePath, perm) as wf:
             wf.writelines(printstate)
+
+
+def parseRTypeIns(instruction: str) -> dict:
+    funct7 = instruction[0:7]
+    funct3 = instruction[17:20]
+    op = ""
+    if funct7 == "0100000":
+        op = "SUB"
+    else:
+        if funct3 == "000":
+            op = "ADD"
+        elif funct3 == "100":
+            op = "XOR"
+        elif funct3 == "110":
+            op = "OR"
+        elif funct3 == "111":
+            op = "AND"
+    result = {
+        "funct7": instruction[0:7],
+        "rs2": instruction[7:12],
+        "rs1": instruction[12:17],
+        "funct3": instruction[17:20],
+        "rd": instruction[20:25],
+        "opcode": instruction[25:32],
+        "op": op,
+    }
+    return result
+
+
+def parseITypeIns(instruction: str) -> dict:
+    funct3 = instruction[17:20]
+    op = ""
+    if funct3 == "000":
+        op = "ADDI"
+    elif funct3 == "100":
+        op = "XORI"
+    elif funct3 == "110":
+        op = "ORI"
+    elif funct3 == "111":
+        op = "ANDI"
+
+    result = {
+        "imm": instruction[0:12],
+        "rs1": instruction[12:17],
+        "funct3": instruction[17:20],
+        "rd": instruction[20:25],
+        "opcode": instruction[25:32],
+        "op": op,
+    }
+    return result
+
+
+def parseSTypeIns(instruction: str) -> dict:
+    result = {
+        "imm": instruction[0:7] + instruction[20:25],
+        "rs2": instruction[7:12],
+        "rs1": instruction[12:17],
+        "funct3": instruction[17:20],
+        "opcode": instruction[25:32],
+        "op": "SW"
+    }
+    return result
 
 
 class FiveStageCore(Core):
@@ -207,6 +288,7 @@ class FiveStageCore(Core):
 def getTypeByOpCode(code: str) -> str:
     return OPCODE2TYPE[code]
 
+
 def parseBTypeIns(ins):
     funct3 = ins[-15:-12]
     if funct3 == '000':
@@ -219,6 +301,7 @@ def parseBTypeIns(ins):
         'rs1': ins[-20:-15],
         'imm': ins[-32] + ins[-8] + ins[-31:-25] + ins[-12:-8]
     }
+
 
 # def parseUTypeIns(ins):
 #     return {
@@ -234,12 +317,14 @@ def parseJTypeIns(ins):
         'rd': ins[-12:-7],
     }
 
+
 def int2signedBin(d: int) -> str:
     '''
     :param n: a decimal number
     :return: a string represents the signed binary of d
     '''
     pass
+
 
 def signedBin2int(b: str) -> int:
     '''
