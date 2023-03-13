@@ -56,13 +56,13 @@ class RegisterFile(object):
         self.outputFile = ioDir + "RFResult.txt"
         self.Registers = [0x0 for i in range(32)]
 
-    def readRF(self, Reg_addr):
-        # Fill in
-        pass
+    def readRF(self, Reg_addr: str) -> int:
+        index = int(Reg_addr, 2)
+        return self.Registers[index]
 
-    def writeRF(self, Reg_addr, Wrt_reg_data):
-        # Fill in
-        pass
+    def writeRF(self, Reg_addr: str, Wrt_reg_data: int):
+        index = int(Reg_addr, 2)
+        self.Registers[index] = Wrt_reg_data
 
     def outputRF(self, cycle):
         op = ["-" * 70 + "\n", "State of RF after executing cycle:" + str(cycle) + "\n"]
@@ -115,10 +115,19 @@ class Core(object):
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
 
     def exeRTypeIns(self, elements):
-        funct7, funct3 = elements['funct7'], elements['funct3']
-        pass
-
-
+        op, rd, rs1, rs2 = elements['op']
+        rs1Val = self.myRF.readRF(rs1)
+        rs2Val = self.myRF.readRF(rs2)
+        if op == "ADD":
+            self.myRF.writeRF(rd, rs1Val + rs2Val)
+        elif op == "SUB":
+            self.myRF.writeRF(rd, rs1Val - rs2Val)
+        elif op == "XOR":
+            self.myRF.writeRF(rd, rs1Val ^ rs2Val)
+        elif op == "OR":
+            self.myRF.writeRF(rd, rs1Val | rs2Val)
+        elif op == "AND":
+            self.myRF.writeRF(rd, rs1Val & rs2Val)
 
 
 class SingleStageCore(Core):
@@ -135,14 +144,6 @@ class SingleStageCore(Core):
 
         # parse instruction
         ins_elements = {}
-        if insType == "R":
-            ins_elements = parseRTypeIns(instruction)
-        elif insType == "I":
-            ins_elements = parseITypeIns(instruction)
-        elif insType == "S":
-            ins_elements = parseSTypeIns(instruction)
-        print(f"parseRes = {ins_elements}")
-
         if insType == "HALT":
             self.halted = True
             return
@@ -154,7 +155,17 @@ class SingleStageCore(Core):
             self.exeJTypeIns(ins_elements)
         else:
             # implement other types of instructions that won't affect nextState.IF["PC"]
+            if insType == "R":
+                ins_elements = parseRTypeIns(instruction)
+                self.exeRTypeIns(ins_elements)
+            elif insType == "I":
+                ins_elements = parseITypeIns(instruction)
+            elif insType == "S":
+                ins_elements = parseSTypeIns(instruction)
+
             self.nextState.IF["PC"] += 4
+
+        print(f"parseRes = {ins_elements}")
 
         # self.halted = True
         if self.state.IF["nop"]:
