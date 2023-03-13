@@ -3,6 +3,16 @@ import argparse
 
 MemSize = 1000  # memory size, in reality, the memory size should be 2^32, but for this lab, for the space resaon, we keep it as this large number, but the memory is still 32-bit addressable.
 
+OPCODE2TYPE = {
+    "0110011": "R",
+    "0010011": "I",
+    "1101111": "J",
+    "1100011": "B",
+    "0100011": "S",
+    "0000011": "I",
+    "1111111": "HALT",
+}
+
 
 class InsMem(object):
     def __init__(self, name, ioDir):
@@ -97,8 +107,15 @@ class SingleStageCore(Core):
     def step(self):
         # Your implementation
         instruction = self.ext_imem.readInstr(self.state.IF["PC"])
+        print(f"PC = {self.state.IF['PC']} ins = {instruction}")
+        insType = getTypeByOpCode(instruction[-7:])
+        print(insType)
+        if insType == "HALT":
+            self.halted = True
+            return
+        self.nextState.IF["PC"] += 4
 
-        self.halted = True
+        # self.halted = True
         if self.state.IF["nop"]:
             self.halted = True
 
@@ -163,6 +180,10 @@ class FiveStageCore(Core):
             perm = "a"
         with open(self.opFilePath, perm) as wf:
             wf.writelines(printstate)
+
+
+def getTypeByOpCode(code: str) -> str:
+    return OPCODE2TYPE[code]
 
 
 if __name__ == "__main__":
