@@ -246,7 +246,18 @@ def signedBin2int(b: str) -> int:
     :param b: a string represents a signed binary
     :return: the decimal number of b
     '''
-
+    sign = b[0]     # the sign bit
+    value = b[1:]
+    if sign == '0':   # non-negative
+        return int(value, 2)
+    elif sign == '1':
+        complement = ['1'  if bit == '0' else '0' for bit in value]
+        i = -1
+        while complement[i] == '1':
+            complement[i] = '0'
+            i -= 1
+        complement[i] = '1'
+        return -int(''.join(complement), 2)
 
 if __name__ == "__main__":
 
