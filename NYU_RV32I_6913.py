@@ -41,10 +41,10 @@ class DataMem(object):
         # return 32 bit hex val
         return signedBin2int(''.join(self.DMem[int(ReadAddress,2):int(ReadAddress,2)+4]))
 
-    def writeDataMem(self, Address, WriteData):
+    def writeDataMem(self, Address: int, WriteData: int):
         # write data into byte addressable memory
-
-        pass
+        data = int2signedBin(WriteData)
+        self.DMem[Address:Address+4] = [data[0:8], data[8:16], data[16:24], data[24:32]]
 
     def outputDataMem(self):
         resPath = self.ioDir + "/" + self.id + "_DMEMResult.txt"
@@ -131,7 +131,7 @@ class Core(object):
             self.myRF.writeRF(rd, self.ext_dmem.readDataMem(rs1+imm))
 
     def exeRTypeIns(self, elements):
-        op, rd, rs1, rs2 = elements['op']
+        op, rd, rs1, rs2 = elements['op'], elements['rd'], elements['rs1'], elements['rs2']
         rs1Val = self.myRF.readRF(rs1)
         rs2Val = self.myRF.readRF(rs2)
         if op == "ADD":
@@ -144,6 +144,14 @@ class Core(object):
             self.myRF.writeRF(rd, rs1Val | rs2Val)
         elif op == "AND":
             self.myRF.writeRF(rd, rs1Val & rs2Val)
+
+
+    def exeSTypeIns(self, elements):
+        rs1, rs2, imm = elements['rs1'], elements['rs2'], elements['imm']
+        data = self.myRF.readRF(rs2)
+        address = self.myRF.readRF(rs1) + signedBin2int(imm)
+        self.ext_dmem.writeDataMem(address, data)
+
 
 class SingleStageCore(Core):
     def __init__(self, ioDir, imem, dmem):
@@ -177,6 +185,7 @@ class SingleStageCore(Core):
                 ins_elements = parseITypeIns(instruction)
             elif insType == "S":
                 ins_elements = parseSTypeIns(instruction)
+                self.exeSTypeIns(ins_elements)
 
             self.nextState.IF["PC"] += 4
 
@@ -343,48 +352,21 @@ def parseJTypeIns(ins):
         'rd': ins[-12:-7],
     }
 
-def getNegComplement(value: str) -> str:
-    '''
-    :param value: a binary represent the abs of a negative
-    :return: the negative's complement
-    '''
-    complement = ['1' if bit == '0' else '0' for bit in value]
-    i = -1
-    while complement[i] == '1':
-        complement[i] = '0'
-        i -= 1
-    complement[i] = '1'
-    return ''.join(complement)
-
-def int2signedBin(d: int, l: int) -> str:
+def int2signedBin(d: int) -> str:
     '''
     :param d: a decimal number
     :param l: the length of the binary
-    :return: a l-bit long string represents the signed binary of d
+    :return: a 32-bit long string represents the signed binary of d
     '''
-    prefix = ''
-    if d >= 0:
-        value = bin(d)[2:]
-        for i in range(l-len(value)):   # sign extended
-            prefix += '0'
-        return prefix + value
-    elif d < 0:
-        value = bin(d)[3:]
-        for i in range(l-len(value)):   # sign extended
-            prefix += '1'
-        return prefix + getNegComplement(value)
+    return bin(d & 0xffffffff)[2:].zfill(32)
 
 def signedBin2int(b: str) -> int:
     '''
     :param b: a string represents a signed binary
     :return: the decimal number of b
     '''
-    sign = b[0]     # the sign bit
-    value = b[1:]
-    if sign == '0':   # non-negative
-        return int(value, 2)
-    elif sign == '1':   # negative
-        return -int(getNegComplement(value), 2)
+    return int(b, 2) if b[0] == '0' else -(int(bin(int(b, 2) ^ 0xffffffff), 2) + 1)
+
 
 if __name__ == "__main__":
 
