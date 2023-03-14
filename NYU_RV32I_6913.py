@@ -194,7 +194,7 @@ class SingleStageCore(Core):
             # self.halted = True
             self.nextState.IF['nop'] = True
 
-        print(f"cycle={self.cycle}, ins = {instruction}, parseRes = {ins_elements}")
+        # print(f"cycle={self.cycle}, ins = {instruction}, parseRes = {ins_elements}")
 
         self.myRF.outputRF(self.cycle)  # dump RF
         self.printState(self.nextState, self.cycle)  # print states after executing cycle 0, cycle 1, cycle 2 ...
@@ -402,6 +402,10 @@ if __name__ == "__main__":
         if ssCore.halted and fsCore.halted:
             break
 
+    print(f"Single Stage Core Performance Metrics-----------------------------\n"
+          f"Number of cycles taken: {ssCore.cycle}\n"
+          f"Cycles per instruction: 1\n"
+          f"Instructions per cycle: 1")
     # dump SS and FS data mem.
     dmem_ss.outputDataMem()
     dmem_fs.outputDataMem()
