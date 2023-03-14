@@ -38,3 +38,11 @@ IF.nop: False
 State after executing cycle: 9
 IF.PC: 40
 IF.nop: False
+----------------------------------------------------------------------
+State after executing cycle: 10
+IF.PC: 40
+IF.nop: True
+----------------------------------------------------------------------
+State after executing cycle: 11
+IF.PC: 40
+IF.nop: True

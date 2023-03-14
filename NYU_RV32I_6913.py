@@ -55,15 +55,15 @@ class DataMem(object):
 class RegisterFile(object):
     def __init__(self, ioDir):
         self.outputFile = ioDir + "RFResult.txt"
-        self.Registers = [0x0 for i in range(32)]
+        self.Registers = ['0' * 32 for i in range(32)]
 
     def readRF(self, Reg_addr: str) -> int:
         index = int(Reg_addr, 2)
-        return self.Registers[index]
+        return signedBin2int(self.Registers[index])
 
     def writeRF(self, Reg_addr: str, Wrt_reg_data: int):
         index = int(Reg_addr, 2)
-        self.Registers[index] = Wrt_reg_data
+        self.Registers[index] = int2signedBin(Wrt_reg_data)
 
     def outputRF(self, cycle):
         op = ["-" * 70 + "\n", "State of RF after executing cycle:" + str(cycle) + "\n"]
@@ -103,17 +103,17 @@ class Core(object):
         op, rs1, rs2, imm = elements['op'], elements['rs1'], elements['rs2'], elements['imm']
         rs1, rs2 = self.myRF.readRF(rs1), self.myRF.readRF(rs2)
         if op == 'BEQ':
-            self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm) if rs1 == rs2 \
-                else self.State.IF['PC'] + 4
+            self.nextState.IF['PC'] = self.state.IF['PC'] + signedBin2int(imm+'0') if rs1 == rs2 \
+                else self.state.IF['PC'] + 4
         elif op == 'BNE':
-            self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm) if rs1 != rs2 \
-                else self.State.IF['PC'] + 4
+            self.nextState.IF['PC'] = self.state.IF['PC'] + signedBin2int(imm+'0') if rs1 != rs2 \
+                else self.state.IF['PC'] + 4
 
     def exeJTypeIns(self, elements):
         op, rd, imm = elements['op'], elements['rd'], elements['imm']
         if op == 'JAL':
-            self.myRF.writeRF(rd, self.State.IF['PC'] + 4)
-            self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
+            self.myRF.writeRF(rd, self.state.IF['PC'] + 4)
+            self.nextState.IF['PC'] = self.state.IF['PC'] + signedBin2int(imm)
 
     def exeITypeIns(self, elements):
         op, imm, rs1, rd = elements['op'], elements['imm'], elements['rs1'], elements['rd']
@@ -160,22 +160,17 @@ class SingleStageCore(Core):
     def step(self):
         # Your implementation
         instruction = self.ext_imem.readInstr(self.state.IF["PC"])
-        print(f"PC = {self.state.IF['PC']} ins = {instruction}")
         insType = getTypeByOpCode(instruction[-7:])
-        print(insType)
 
         ins_elements = {}
         # parse and implement instruction
-        if insType == "HALT":
-            self.halted = True
-            return
-        elif insType == 'B':
+        if insType == 'B':
             ins_elements = parseBTypeIns(instruction)
             self.exeBTypeIns(ins_elements)
         elif insType == 'J':
             ins_elements = parseJTypeIns(instruction)
             self.exeJTypeIns(ins_elements)
-        else:
+        elif insType != "HALT":
             # implement other types of instructions that won't affect nextState.IF["PC"]
             if insType == "R":
                 ins_elements = parseRTypeIns(instruction)
@@ -189,17 +184,24 @@ class SingleStageCore(Core):
 
             self.nextState.IF["PC"] += 4
 
-        print(f"parseRes = {ins_elements}")
+
 
         # self.halted = True
         if self.state.IF["nop"]:
             self.halted = True
+
+        if insType == "HALT":
+            # self.halted = True
+            self.nextState.IF['nop'] = True
+
+        print(f"cycle={self.cycle}, ins = {instruction}, parseRes = {ins_elements}")
 
         self.myRF.outputRF(self.cycle)  # dump RF
         self.printState(self.nextState, self.cycle)  # print states after executing cycle 0, cycle 1, cycle 2 ...
 
         self.state = self.nextState  # The end of the cycle and updates the current state with the values calculated in this cycle
         self.cycle += 1
+
 
     def printState(self, state, cycle):
         printstate = ["-" * 70 + "\n", "State after executing cycle: " + str(cycle) + "\n"]
@@ -358,19 +360,18 @@ def parseJTypeIns(ins):
 
 
 def int2signedBin(d: int) -> str:
-    '''
+    """
     :param d: a decimal number
-    :param l: the length of the binary
     :return: a 32-bit long string represents the signed binary of d
-    '''
+    """
     return bin(d & 0xffffffff)[2:].zfill(32)
 
 
 def signedBin2int(b: str) -> int:
-    '''
+    """
     :param b: a string represents a signed binary
     :return: the decimal number of b
-    '''
+    """
     return int(b, 2) if b[0] == '0' else -(int(bin(int(b, 2) ^ int('1'.ljust(len(b), '1'), 2)), 2) + 1)
 
 
