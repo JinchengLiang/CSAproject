@@ -36,7 +36,7 @@ class DataMem(object):
         with open(ioDir + "/dmem.txt") as dm:
             self.DMem = [data.replace("\n", "") for data in dm.readlines()]
 
-    def readDataMem(self, ReadAddress):
+    def readDataMem(self, ReadAddress: str) -> int:
         # read data memory
         # return 32 bit hex val
         return signedBin2int(''.join(self.DMem[int(ReadAddress,2):int(ReadAddress,2)+4]))
