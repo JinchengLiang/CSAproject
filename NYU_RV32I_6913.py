@@ -36,10 +36,10 @@ class DataMem(object):
         with open(ioDir + "/dmem.txt") as dm:
             self.DMem = [data.replace("\n", "") for data in dm.readlines()]
 
-    def readDataMem(self, ReadAddress: str) -> int:
+    def readDataMem(self, ReadAddress: int) -> int:
         # read data memory
         # return 32 bit hex val
-        return signedBin2int(''.join(self.DMem[int(ReadAddress, 2):int(ReadAddress, 2) + 4]))
+        return signedBin2int(''.join(self.DMem[ReadAddress:ReadAddress + 4]))
 
     def writeDataMem(self, Address: int, WriteData: int):
         # write data into byte addressable memory
