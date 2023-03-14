@@ -182,6 +182,7 @@ class SingleStageCore(Core):
                 self.exeRTypeIns(ins_elements)
             elif insType == "I":
                 ins_elements = parseITypeIns(instruction)
+                self.exeITypeIns(ins_elements)
             elif insType == "S":
                 ins_elements = parseSTypeIns(instruction)
                 self.exeSTypeIns(ins_elements)
@@ -242,15 +243,19 @@ def parseRTypeIns(instruction: str) -> dict:
 
 def parseITypeIns(instruction: str) -> dict:
     funct3 = instruction[17:20]
+    opcode = instruction[25:32]
     op = ""
-    if funct3 == "000":
-        op = "ADDI"
-    elif funct3 == "100":
-        op = "XORI"
-    elif funct3 == "110":
-        op = "ORI"
-    elif funct3 == "111":
-        op = "ANDI"
+    if opcode == "0000011":
+        op = "LW"
+    else:
+        if funct3 == "000":
+            op = "ADDI"
+        elif funct3 == "100":
+            op = "XORI"
+        elif funct3 == "110":
+            op = "ORI"
+        elif funct3 == "111":
+            op = "ANDI"
 
     result = {
         "imm": instruction[0:12],
