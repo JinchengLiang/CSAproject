@@ -36,13 +36,14 @@ class DataMem(object):
         with open(ioDir + "/dmem.txt") as dm:
             self.DMem = [data.replace("\n", "") for data in dm.readlines()]
 
-    def readInstr(self, ReadAddress):
+    def readDataMem(self, ReadAddress):
         # read data memory
         # return 32 bit hex val
-        pass
+        return signedBin2int(''.join(self.DMem[int(ReadAddress,2):int(ReadAddress,2)+4]))
 
     def writeDataMem(self, Address, WriteData):
         # write data into byte addressable memory
+
         pass
 
     def outputDataMem(self):
@@ -114,15 +115,20 @@ class Core(object):
             self.myRF.writeRF(rd, self.State.IF['PC'] + 4)
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
 
-
     def exeITypeIns(self, elements):
         op, imm, rs1, rd = elements['op'], elements['imm'], elements['rs1'], elements['rd']
         rs1 = self.myRF.readRF(rs1)
+        imm = signedBin2int(imm)
         if op == 'ADDI':
-            rd_value = rs1 + signedBin2int(imm)
+            self.myRF.writeRF(rd, rs1 + imm)
         elif op == 'XORI':
-            rd_value = rs1 ^ signedBin2int(imm)
-
+            self.myRF.writeRF(rd, rs1 ^ imm)
+        elif op == 'ORI':
+            self.myRF.writeRF(rd, rs1 | imm)
+        elif op == 'ANDI':
+            self.myRF.writeRF(rd, rs1 & imm)
+        elif op == "LW":
+            self.myRF.writeRF(rd, self.ext_dmem.readDataMem(rs1+imm))
 
     def exeRTypeIns(self, elements):
         op, rd, rs1, rs2 = elements['op']
@@ -138,7 +144,6 @@ class Core(object):
             self.myRF.writeRF(rd, rs1Val | rs2Val)
         elif op == "AND":
             self.myRF.writeRF(rd, rs1Val & rs2Val)
-
 
 class SingleStageCore(Core):
     def __init__(self, ioDir, imem, dmem):
@@ -338,14 +343,36 @@ def parseJTypeIns(ins):
         'rd': ins[-12:-7],
     }
 
-
-def int2signedBin(d: int) -> str:
+def getNegComplement(value: str) -> str:
     '''
-    :param n: a decimal number
-    :return: a string represents the signed binary of d
+    :param value: a binary represent the abs of a negative
+    :return: the negative's complement
     '''
-    pass
+    complement = ['1' if bit == '0' else '0' for bit in value]
+    i = -1
+    while complement[i] == '1':
+        complement[i] = '0'
+        i -= 1
+    complement[i] = '1'
+    return ''.join(complement)
 
+def int2signedBin(d: int, l: int) -> str:
+    '''
+    :param d: a decimal number
+    :param l: the length of the binary
+    :return: a l-bit long string represents the signed binary of d
+    '''
+    prefix = ''
+    if d >= 0:
+        value = bin(d)[2:]
+        for i in range(l-len(value)):   # sign extended
+            prefix += '0'
+        return prefix + value
+    elif d < 0:
+        value = bin(d)[3:]
+        for i in range(l-len(value)):   # sign extended
+            prefix += '1'
+        return prefix + getNegComplement(value)
 
 def signedBin2int(b: str) -> int:
     '''
@@ -357,13 +384,7 @@ def signedBin2int(b: str) -> int:
     if sign == '0':   # non-negative
         return int(value, 2)
     elif sign == '1':   # negative
-        complement = ['1'  if bit == '0' else '0' for bit in value]
-        i = -1
-        while complement[i] == '1':
-            complement[i] = '0'
-            i -= 1
-        complement[i] = '1'
-        return -int(''.join(complement), 2)
+        return -int(getNegComplement(value), 2)
 
 if __name__ == "__main__":
 
