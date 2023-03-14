@@ -169,6 +169,7 @@ class SingleStageCore(Core):
                 ins_elements = parseITypeIns(instruction)
             elif insType == "S":
                 ins_elements = parseSTypeIns(instruction)
+                self.exeSTypeIns(ins_elements)
 
             self.nextState.IF["PC"] += 4
 
