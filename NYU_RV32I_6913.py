@@ -365,7 +365,7 @@ def signedBin2int(b: str) -> int:
     :param b: a string represents a signed binary
     :return: the decimal number of b
     '''
-    return int(b, 2) if b[0] == '0' else -(int(bin(int(b, 2) ^ 0xffffffff), 2) + 1)
+    return int(b, 2) if b[0] == '0' else -(int(bin(int(b, 2) ^ int('1'.ljust(len(b), '1'),2)), 2) + 1)
 
 
 if __name__ == "__main__":
