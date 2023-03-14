@@ -39,11 +39,12 @@ class DataMem(object):
     def readInstr(self, ReadAddress):
         # read data memory
         # return 32 bit hex val
-        pass
+        return "".join(self.DMem[ReadAddress:ReadAddress + 4])
 
-    def writeDataMem(self, Address, WriteData):
+    def writeDataMem(self, Address: int, WriteData: int):
         # write data into byte addressable memory
-        pass
+        data = int2signedBin(WriteData)
+        self.DMem[Address:Address+4] = [data[0:8], data[8:16], data[16:24], data[24:32]]
 
     def outputDataMem(self):
         resPath = self.ioDir + "/" + self.id + "_DMEMResult.txt"
@@ -115,7 +116,7 @@ class Core(object):
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
 
     def exeRTypeIns(self, elements):
-        op, rd, rs1, rs2 = elements['op']
+        op, rd, rs1, rs2 = elements['op'], elements['rd'], elements['rs1'], elements['rs2']
         rs1Val = self.myRF.readRF(rs1)
         rs2Val = self.myRF.readRF(rs2)
         if op == "ADD":
@@ -128,6 +129,12 @@ class Core(object):
             self.myRF.writeRF(rd, rs1Val | rs2Val)
         elif op == "AND":
             self.myRF.writeRF(rd, rs1Val & rs2Val)
+
+    def exeSTypeIns(self, elements):
+        rs1, rs2, imm = elements['rs1'], elements['rs2'], elements['imm']
+        data = self.myRF.readRF(rs2)
+        address = self.myRF.readRF(rs1) + signedBin2int(imm)
+        self.ext_dmem.writeDataMem(address, data)
 
 
 class SingleStageCore(Core):
@@ -334,7 +341,11 @@ def int2signedBin(d: int) -> str:
     :param n: a decimal number
     :return: a string represents the signed binary of d
     '''
-    pass
+    # Convert the input number to a 32-bit signed binary string
+    binary_string = bin(num & 0xffffffff)[2:].zfill(32)
+
+    # Return the binary string
+    return binary_string
 
 
 def signedBin2int(b: str) -> int:
@@ -342,18 +353,19 @@ def signedBin2int(b: str) -> int:
     :param b: a string represents a signed binary
     :return: the decimal number of b
     '''
-    sign = b[0]     # the sign bit
+    sign = b[0]  # the sign bit
     value = b[1:]
-    if sign == '0':   # non-negative
+    if sign == '0':  # non-negative
         return int(value, 2)
-    elif sign == '1':   # negative
-        complement = ['1'  if bit == '0' else '0' for bit in value]
+    elif sign == '1':  # negative
+        complement = ['1' if bit == '0' else '0' for bit in value]
         i = -1
         while complement[i] == '1':
             complement[i] = '0'
             i -= 1
         complement[i] = '1'
         return -int(''.join(complement), 2)
+
 
 if __name__ == "__main__":
 
