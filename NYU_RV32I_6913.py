@@ -39,12 +39,12 @@ class DataMem(object):
     def readDataMem(self, ReadAddress: str) -> int:
         # read data memory
         # return 32 bit hex val
-        return signedBin2int(''.join(self.DMem[int(ReadAddress,2):int(ReadAddress,2)+4]))
+        return signedBin2int(''.join(self.DMem[int(ReadAddress, 2):int(ReadAddress, 2) + 4]))
 
     def writeDataMem(self, Address: int, WriteData: int):
         # write data into byte addressable memory
         data = int2signedBin(WriteData)
-        self.DMem[Address:Address+4] = [data[0:8], data[8:16], data[16:24], data[24:32]]
+        self.DMem[Address:Address + 4] = [data[0:8], data[8:16], data[16:24], data[24:32]]
 
     def outputDataMem(self):
         resPath = self.ioDir + "/" + self.id + "_DMEMResult.txt"
@@ -128,7 +128,7 @@ class Core(object):
         elif op == 'ANDI':
             self.myRF.writeRF(rd, rs1 & imm)
         elif op == "LW":
-            self.myRF.writeRF(rd, self.ext_dmem.readDataMem(rs1+imm))
+            self.myRF.writeRF(rd, self.ext_dmem.readDataMem(rs1 + imm))
 
     def exeRTypeIns(self, elements):
         op, rd, rs1, rs2 = elements['op'], elements['rd'], elements['rs1'], elements['rs2']
@@ -144,7 +144,6 @@ class Core(object):
             self.myRF.writeRF(rd, rs1Val | rs2Val)
         elif op == "AND":
             self.myRF.writeRF(rd, rs1Val & rs2Val)
-
 
     def exeSTypeIns(self, elements):
         rs1, rs2, imm = elements['rs1'], elements['rs2'], elements['imm']
@@ -352,6 +351,7 @@ def parseJTypeIns(ins):
         'rd': ins[-12:-7],
     }
 
+
 def int2signedBin(d: int) -> str:
     '''
     :param d: a decimal number
@@ -360,12 +360,13 @@ def int2signedBin(d: int) -> str:
     '''
     return bin(d & 0xffffffff)[2:].zfill(32)
 
+
 def signedBin2int(b: str) -> int:
     '''
     :param b: a string represents a signed binary
     :return: the decimal number of b
     '''
-    return int(b, 2) if b[0] == '0' else -(int(bin(int(b, 2) ^ int('1'.ljust(len(b), '1'),2)), 2) + 1)
+    return int(b, 2) if b[0] == '0' else -(int(bin(int(b, 2) ^ int('1'.ljust(len(b), '1'), 2)), 2) + 1)
 
 
 if __name__ == "__main__":
