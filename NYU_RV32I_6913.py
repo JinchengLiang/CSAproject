@@ -116,7 +116,7 @@ class Core(object):
             self.nextState.IF['PC'] = self.State.IF['PC'] + signedBin2int(imm)
 
     def exeRTypeIns(self, elements):
-        op, rd, rs1, rs2 = elements['op']
+        op, rd, rs1, rs2 = elements['op'], elements['rd'], elements['rs1'], elements['rs2']
         rs1Val = self.myRF.readRF(rs1)
         rs2Val = self.myRF.readRF(rs2)
         if op == "ADD":
